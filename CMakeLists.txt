@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(OpenCV_DIR $ENV{OPENCV_PATH})
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui)
 
-add_executable(clahe main.cpp)
+add_executable(clahe main.cpp
+                     clahe.hpp
+        )
 target_link_libraries(clahe ${OpenCV_LIBS})
 target_include_directories(clahe PUBLIC ${OpenCV_INCLUDE_DIRS})
 
