@@ -32,7 +32,8 @@ int main(int argc, char ** argv)
     cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
 
     cv::Mat equalizedImage;
-    cv::equalizeHist(image, equalizedImage);
+    auto clahe = cv::createCLAHE();
+    clahe->apply(image, equalizedImage);
 
     std::string const windowNameOriginalImage("Original Image");
     std::string const windowNameNewImage("Histogram Equalized Image");
