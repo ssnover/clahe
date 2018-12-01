@@ -8,10 +8,15 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui)
 
 add_executable(clahe main.cpp
                      clahe.hpp
+                     utility.hpp
+                     utility.cpp
         )
 target_link_libraries(clahe ${OpenCV_LIBS})
 target_include_directories(clahe PUBLIC ${OpenCV_INCLUDE_DIRS})
 
-add_executable(opencv-clahe opencv-clahe.cpp)
+add_executable(opencv-clahe opencv-clahe.cpp
+                            utility.hpp
+                            utility.cpp
+        )
 target_link_libraries(opencv-clahe ${OpenCV_LIBS})
 target_include_directories(opencv-clahe PUBLIC ${OpenCV_INCLUDE_DIRS})

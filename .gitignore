@@ -3,3 +3,7 @@ cmake-build-debug
 Debug
 *.jpg
 .idea
+*.zip
+*.png
+*.jpeg
+*.txt
