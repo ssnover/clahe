@@ -8,10 +8,18 @@
 namespace cv
 {
 class Mat;
+typedef Rect2i Rect;
 }
 
 namespace snover
 {
+
+enum GRAY_LEVEL : uint8_t
+{
+    LOW = 0,
+    MIDDLE = 1,
+    HIGH = 2,
+};
 
 struct IMAGE_HISTOGRAM
 {
@@ -28,6 +36,8 @@ struct IMAGE_HISTOGRAM
     {
         delete histogram;
     }
+
+    friend GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
 
     inline unsigned int operator[](unsigned int index) const noexcept
     {
@@ -56,9 +66,30 @@ int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHi
 int createHistogramPlot(IMAGE_HISTOGRAM const & histogram, unsigned int width, unsigned int height, cv::Mat & outputImage);
 
 /*
+ * Takes in a histogram and parameters for the size of the output plot image
+ * and creates a plot image of a CDF for the histogram.
+ */
+int createCDFPlot(IMAGE_HISTOGRAM const & histogram, unsigned int width, unsigned int height, cv::Mat & outputImage);
+
+/*
  * Calculates the entropy measurement of a grayscale image.
  */
 float calculateEntropy(cv::Mat const & image);
+
+/*
+ * Gets a rectangular subregion of the image.
+ */
+int getSubregionOfImage(cv::Mat const & input, cv::Rect & region, cv::Mat & output);
+
+
+/*
+ * Classifies the image into one of three categories based on where the highest
+ * number of gray scale intensities falls.
+ *
+ * Based on gray level definition of Youlian Zhu and Cheng Huang in "An Adaptive
+ * Histogram Equalization Algorithm on the Image Gray Level Mapping".
+ */
+GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
 
 
 } // namespace snover

@@ -49,6 +49,37 @@ int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
     return 0;
 }
 
+int createCDFPlot(IMAGE_HISTOGRAM const & histogram,
+                        unsigned int width,
+                        unsigned int height,
+                        cv::Mat & outputImage)
+{
+    unsigned int const numberOfBins(256);
+    unsigned int const elementWidth(width / numberOfBins);
+    float const verticalScaleFactor(static_cast<float>([&histogram](){
+        auto numberOfPixels = 0;
+        for (auto i = 0u; i < 256; ++i)
+        {
+            numberOfPixels += histogram[i];
+        }
+        return numberOfPixels;
+    }()) / height);
+
+    outputImage = cv::Mat(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
+    float cumulativeSum = histogram[0];
+    for (auto i = 1u; i < numberOfBins; ++i)
+    {
+        cv::line(outputImage,
+                 cv::Point(elementWidth * (i-1),
+                           static_cast<int>(height - cumulativeSum / verticalScaleFactor)),
+                 cv::Point(elementWidth * i,
+                           static_cast<int>(height - (cumulativeSum + histogram[i]) / verticalScaleFactor)),
+                 cv::Scalar(255, 255, 255));
+    }
+
+    return 0;
+}
+
 float calculateEntropy(cv::Mat const & image)
 {
     IMAGE_HISTOGRAM temp("");
@@ -63,7 +94,57 @@ float calculateEntropy(cv::Mat const & image)
         entropy += -1 * proportion * log2(proportion);
     }
 
-    return entropy;
+    return isnan(entropy) ? 0.f : entropy;
+}
+
+int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat & output)
+{
+    if (region.x + region.width > input.cols || region.y + region.height > input.rows)
+    {
+        return -1;
+    }
+
+    input(region).copyTo(output);
+    return 0;
+}
+
+GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
+{
+    unsigned long numberOfPixels = [&histogram](){
+        unsigned long total = 0;
+        for (auto & iter : *(histogram.histogram))
+        {
+            total += iter;
+        }
+        return total;
+    }();
+
+    unsigned int cumulativeSum[] = {0, 0, 0};
+
+    for (auto i = 0u; i <= 255/3; ++i)
+    {
+        cumulativeSum[0] += histogram[i];
+    }
+    for (auto i = 255/3; i <= 255/3*2; ++i)
+    {
+        cumulativeSum[1] += histogram[i];
+    }
+    for (auto i = 255/3*2; i <= 255; ++i)
+    {
+        cumulativeSum[2] += histogram[i];
+    }
+
+    uint8_t maxLevel = 0;
+    if (cumulativeSum[1] > cumulativeSum[0])
+    {
+        maxLevel = 1;
+    }
+    if (cumulativeSum[2] > cumulativeSum[maxLevel])
+    {
+        maxLevel = 2;
+    }
+
+    return static_cast<GRAY_LEVEL>(maxLevel);
 }
 
 } // namespace snover

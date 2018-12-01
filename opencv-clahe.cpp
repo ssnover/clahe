@@ -37,20 +37,25 @@ int main(int argc, char ** argv)
     cv::Mat histogramImage;
     snover::createHistogramPlot(grayHistogram, 512, 512, histogramImage);
 
+    // do normal OpenCV histogram equalization
+    cv::Mat normalEqualization;
+    cv::equalizeHist(image, normalEqualization);
+
     // generate CLAHEd image
-    cv::Mat equalizedImage;
+    cv::Mat claheImage;
     auto clahe = cv::createCLAHE();
-    clahe->apply(image, equalizedImage);
+    clahe->apply(image, claheImage);
 
     // find the histogram of the CLAHE image
     snover::IMAGE_HISTOGRAM claheHistogram("CLAHEd Image");
-    snover::generateGrayscaleHistogram(equalizedImage, claheHistogram);
+    snover::generateGrayscaleHistogram(claheImage, claheHistogram);
     cv::Mat claheHistImage;
     snover::createHistogramPlot(claheHistogram, 512, 512, claheHistImage);
 
     std::cout << "Entropies:" << std::endl;
     std::cout << "Original: " << snover::calculateEntropy(image) << std::endl;
-    std::cout << "OpenCV CLAHE: " << snover::calculateEntropy(equalizedImage) << std::endl;
+    std::cout << "OpenCV CLAHE: " << snover::calculateEntropy(claheImage) << std::endl;
+    std::cout << "OpenCV Normal histeq: " << snover::calculateEntropy(normalEqualization) << std::endl;
 
     std::string const windowNameOriginalImage("Original Image");
     std::string const windowNameNewImage("Histogram Equalized Image");
@@ -63,7 +68,7 @@ int main(int argc, char ** argv)
     cv::namedWindow(windowNameNewHistogram, cv::WINDOW_NORMAL);
 
     cv::imshow(windowNameOriginalImage, image);
-    cv::imshow(windowNameNewImage, equalizedImage);
+    cv::imshow(windowNameNewImage, claheImage);
     cv::imshow(windowNameOriginalHistogram, histogramImage);
     cv::imshow(windowNameNewHistogram, claheHistImage);
 
