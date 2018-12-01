@@ -49,4 +49,21 @@ int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
     return 0;
 }
 
+float calculateEntropy(cv::Mat const & image)
+{
+    IMAGE_HISTOGRAM temp("");
+    generateGrayscaleHistogram(image, temp);
+
+    auto totalPixels(image.rows * image.cols);
+    float entropy = 0.0;
+
+    for (auto i = 0u; i < 256; ++i)
+    {
+        float proportion = static_cast<float>(temp[i]) / totalPixels;
+        entropy += -1 * proportion * log2(proportion);
+    }
+
+    return entropy;
+}
+
 } // namespace snover

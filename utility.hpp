@@ -49,8 +49,16 @@ struct IMAGE_HISTOGRAM
  */
 int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHistogram);
 
-
+/*
+ * Takes in a histogram and parameters for the size of the output plot image
+ * and creates the plot image.
+ */
 int createHistogramPlot(IMAGE_HISTOGRAM const & histogram, unsigned int width, unsigned int height, cv::Mat & outputImage);
+
+/*
+ * Calculates the entropy measurement of a grayscale image.
+ */
+float calculateEntropy(cv::Mat const & image);
 
 
 } // namespace snover
