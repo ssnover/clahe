@@ -2,12 +2,11 @@
  * file: utility.cpp
  */
 
-#include <opencv2/opencv.hpp>
 #include "utility.hpp"
+#include <opencv2/opencv.hpp>
 
 namespace snover
 {
-
 int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHistogram)
 {
     if (outputHistogram.histogram->size() != 256)
@@ -40,7 +39,7 @@ int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
     {
         cv::line(outputImage,
                  cv::Point(binWidth * (i - 1),
-                           static_cast<int>(height - histogram[i-1] / verticalScaleFactor)), // point1
+                           static_cast<int>(height - histogram[i - 1] / verticalScaleFactor)), // point1
                  cv::Point(binWidth * i,
                            static_cast<int>(height - histogram[i] / verticalScaleFactor)), // point 2
                  cv::Scalar(255, 255, 255)); // line color
@@ -50,27 +49,28 @@ int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
 }
 
 int createCDFPlot(IMAGE_HISTOGRAM const & histogram,
-                        unsigned int width,
-                        unsigned int height,
-                        cv::Mat & outputImage)
+                  unsigned int width,
+                  unsigned int height,
+                  cv::Mat & outputImage)
 {
     unsigned int const numberOfBins(256);
     unsigned int const elementWidth(width / numberOfBins);
-    float const verticalScaleFactor(static_cast<float>([&histogram](){
-        auto numberOfPixels = 0;
-        for (auto i = 0u; i < 256; ++i)
-        {
-            numberOfPixels += histogram[i];
-        }
-        return numberOfPixels;
-    }()) / height);
+    float const verticalScaleFactor(static_cast<float>([&histogram]() {
+                                        auto numberOfPixels = 0;
+                                        for (auto i = 0u; i < 256; ++i)
+                                        {
+                                            numberOfPixels += histogram[i];
+                                        }
+                                        return numberOfPixels;
+                                    }()) /
+                                    height);
 
     outputImage = cv::Mat(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
     float cumulativeSum = histogram[0];
     for (auto i = 1u; i < numberOfBins; ++i)
     {
         cv::line(outputImage,
-                 cv::Point(elementWidth * (i-1),
+                 cv::Point(elementWidth * (i - 1),
                            static_cast<int>(height - cumulativeSum / verticalScaleFactor)),
                  cv::Point(elementWidth * i,
                            static_cast<int>(height - (cumulativeSum + histogram[i]) / verticalScaleFactor)),
@@ -110,7 +110,7 @@ int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat 
 
 GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
 {
-    unsigned long numberOfPixels = [&histogram](){
+    unsigned long numberOfPixels = [&histogram]() {
         unsigned long total = 0;
         for (auto & iter : *(histogram.histogram))
         {
@@ -121,15 +121,15 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
 
     unsigned int cumulativeSum[] = {0, 0, 0};
 
-    for (auto i = 0u; i <= 255/3; ++i)
+    for (auto i = 0u; i <= 255 / 3; ++i)
     {
         cumulativeSum[0] += histogram[i];
     }
-    for (auto i = 255/3; i <= 255/3*2; ++i)
+    for (auto i = 255 / 3; i <= 255 / 3 * 2; ++i)
     {
         cumulativeSum[1] += histogram[i];
     }
-    for (auto i = 255/3*2; i <= 255; ++i)
+    for (auto i = 255 / 3 * 2; i <= 255; ++i)
     {
         cumulativeSum[2] += histogram[i];
     }
@@ -145,6 +145,41 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
     }
 
     return static_cast<GRAY_LEVEL>(maxLevel);
+}
+
+PIXEL interpolate(std::vector<PIXEL> const & pixels, float outX, float outY)
+{
+    if (pixels.size() != 4)
+    {
+        abort();
+    }
+
+    PIXEL retVal{static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), 0};
+
+    // Sort the four pixels into the order of top left, bottom left, top right, bottom right
+    std::sort(pixels.begin(), pixels.end(), [](PIXEL lhs, PIXEL rhs) {
+        if (lhs.x < rhs.x)
+        {
+            return true;
+        }
+        else
+        {
+            return lhs.y < rhs.y;
+        }
+    });
+
+    float x0 = pixels[0].x;
+    float y0 = pixels[0].y;
+    float x1 = pixels[3].x;
+    float y1 = pixels[3].y;
+
+    // bilinear interpolation
+    retVal.intensity = static_cast<unsigned int>((y1 - outY) / (y1 - y0)) *
+                           ((x1 - outX) / (x1 - x0) * pixels[0].intensity +
+                            (outX - x0) / (x1 - x0) * pixels[2].intensity) +
+                       ((outY - y0) / (y1 - y0)) *
+                           ((x1 - outX) / (x1 - x0) * pixels[1].intensity +
+                            (outX - x0) / (x1 - x0) * pixels[3].intensity);
 }
 
 } // namespace snover

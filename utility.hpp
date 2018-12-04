@@ -5,15 +5,18 @@
 
 #pragma once
 
+#include <cstdint>
+#include <opencv2/core/types.hpp>
+#include <vector>
+
 namespace cv
 {
 class Mat;
 typedef Rect2i Rect;
-}
+} // namespace cv
 
 namespace snover
 {
-
 enum GRAY_LEVEL : uint8_t
 {
     LOW = 0,
@@ -26,7 +29,7 @@ struct IMAGE_HISTOGRAM
     const std::string imageFilename;
     std::vector<unsigned int> * histogram;
 
-    explicit IMAGE_HISTOGRAM(std::string _filename)
+    explicit IMAGE_HISTOGRAM(std::string & _filename)
         : imageFilename(_filename), histogram(new std::vector<unsigned int>(256, 0))
     {
         // Empty
@@ -50,6 +53,12 @@ struct IMAGE_HISTOGRAM
     }
 };
 
+struct PIXEL
+{
+    unsigned int x;
+    unsigned int y;
+    unsigned int intensity;
+};
 
 /*
  * Generates the pixel intensity histogram for a grayscale image.
@@ -63,13 +72,19 @@ int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHi
  * Takes in a histogram and parameters for the size of the output plot image
  * and creates the plot image.
  */
-int createHistogramPlot(IMAGE_HISTOGRAM const & histogram, unsigned int width, unsigned int height, cv::Mat & outputImage);
+int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
+                        unsigned int width,
+                        unsigned int height,
+                        cv::Mat & outputImage);
 
 /*
  * Takes in a histogram and parameters for the size of the output plot image
  * and creates a plot image of a CDF for the histogram.
  */
-int createCDFPlot(IMAGE_HISTOGRAM const & histogram, unsigned int width, unsigned int height, cv::Mat & outputImage);
+int createCDFPlot(IMAGE_HISTOGRAM const & histogram,
+                  unsigned int width,
+                  unsigned int height,
+                  cv::Mat & outputImage);
 
 /*
  * Calculates the entropy measurement of a grayscale image.
@@ -81,7 +96,6 @@ float calculateEntropy(cv::Mat const & image);
  */
 int getSubregionOfImage(cv::Mat const & input, cv::Rect & region, cv::Mat & output);
 
-
 /*
  * Classifies the image into one of three categories based on where the highest
  * number of gray scale intensities falls.
@@ -91,5 +105,10 @@ int getSubregionOfImage(cv::Mat const & input, cv::Rect & region, cv::Mat & outp
  */
 GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
 
+/*
+ * Interpolates the value of a pixel based on it's linear distance in two
+ * dimensions from four pixels.
+ */
+PIXEL interpolate(std::vector<PIXEL> & pixels);
 
 } // namespace snover
