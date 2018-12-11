@@ -8,6 +8,7 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui)
 
 add_executable(clahe main.cpp
                      clahe.hpp
+                     clahe.cpp
                      utility.hpp
                      utility.cpp
         )

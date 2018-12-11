@@ -82,7 +82,7 @@ int createCDFPlot(IMAGE_HISTOGRAM const & histogram,
 
 float calculateEntropy(cv::Mat const & image)
 {
-    IMAGE_HISTOGRAM temp("");
+    IMAGE_HISTOGRAM temp;
     generateGrayscaleHistogram(image, temp);
 
     auto totalPixels(image.rows * image.cols);

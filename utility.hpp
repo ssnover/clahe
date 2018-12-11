@@ -12,7 +12,6 @@
 namespace cv
 {
 class Mat;
-typedef Rect2i Rect;
 } // namespace cv
 
 namespace snover
@@ -26,11 +25,10 @@ enum GRAY_LEVEL : uint8_t
 
 struct IMAGE_HISTOGRAM
 {
-    const std::string imageFilename;
     std::vector<unsigned int> * histogram;
 
-    explicit IMAGE_HISTOGRAM(std::string & _filename)
-        : imageFilename(_filename), histogram(new std::vector<unsigned int>(256, 0))
+    explicit IMAGE_HISTOGRAM()
+        : histogram(new std::vector<unsigned int>(256, 0))
     {
         // Empty
     }
@@ -110,5 +108,14 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
  * dimensions from four pixels.
  */
 PIXEL interpolate(std::vector<PIXEL> & pixels);
+
+/*
+ * Finds all bins of the histogram with a quantity over the clip limit and
+ * removes the excess. The number of excess is added as equally as possible to
+ * all bins in the histogram.
+ *
+ * TODO: Implement me!
+ */
+void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit);
 
 } // namespace snover

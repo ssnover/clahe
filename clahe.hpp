@@ -31,11 +31,8 @@ namespace snover
  * Returns an integer indicating whether the process was successful; 0
  * indicates success and -1 indicates a failure.
  */
-[[nodiscard]] constexpr int clahe(cv::Mat const & input,
+[[nodiscard]] int clahe(cv::Mat const & input,
                      cv::Mat & output,
-                     double clipLimit = 40.0) noexcept
-{
-    return -1;
-}
+                     double clipLimit = 40.0) noexcept;
 
 } // namespace snover
