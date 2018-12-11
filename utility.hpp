@@ -39,6 +39,7 @@ struct IMAGE_HISTOGRAM
     }
 
     friend GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
+    friend void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit);
 
     inline unsigned int operator[](unsigned int index) const noexcept
     {
@@ -113,8 +114,6 @@ PIXEL interpolate(std::vector<PIXEL> & pixels);
  * Finds all bins of the histogram with a quantity over the clip limit and
  * removes the excess. The number of excess is added as equally as possible to
  * all bins in the histogram.
- *
- * TODO: Implement me!
  */
 void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit);
 

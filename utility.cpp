@@ -182,4 +182,28 @@ PIXEL interpolate(std::vector<PIXEL> const & pixels, float outX, float outY)
                             (outX - x0) / (x1 - x0) * pixels[3].intensity);
 }
 
+void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit)
+{
+    unsigned int numberOfPixelsOverLimit(0);
+
+    // Clip each bin quantity and count how many were excess of the clip limit
+    for (auto i = 0u; i < 256; ++i)
+    {
+        if (histogram[i] > clipLimit)
+        {
+            numberOfPixelsOverLimit += histogram[i] - clipLimit;
+            histogram.histogram->operator[](i) = static_cast<unsigned int>(clipLimit);
+        }
+    }
+
+    // Iterate over the bins and add a pixel to the quantity of the bins until
+    // no more pixels are left.
+    // Using a uint8_t to take advantage of overflow.
+    uint8_t binIndex(0);
+    while (numberOfPixelsOverLimit > 0)
+    {
+        histogram.histogram->operator[](binIndex++) = numberOfPixelsOverLimit--;
+    }
+}
+
 } // namespace snover
