@@ -147,7 +147,7 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
     return static_cast<GRAY_LEVEL>(maxLevel);
 }
 
-PIXEL interpolate(std::vector<PIXEL> const & pixels, float outX, float outY)
+PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float outY)
 {
     if (pixels.size() != 4)
     {

@@ -108,7 +108,13 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
  * Interpolates the value of a pixel based on it's linear distance in two
  * dimensions from four pixels.
  */
-PIXEL interpolate(std::vector<PIXEL> & pixels);
+PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float outY);
+
+/*
+ * Interpolates the value of a pixel based on it's linear distance in one
+ * dimension from two pixels.
+ */
+PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1);
 
 /*
  * Finds all bins of the histogram with a quantity over the clip limit and
