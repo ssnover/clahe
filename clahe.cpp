@@ -54,9 +54,20 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
     unsigned int const tileWidth(input.cols / tilesHorizontal);
     unsigned int const tileHeight(input.rows / tilesVertical);
 
+    // Make the underlying data of the output the same as the input
+    output.create(input.size(), input.type());
+
     LOOKUP_TABLE * claheLookupTables[tilesVertical][tilesHorizontal];
 
-    // Use CV_64F since the type's size will be the same as a pointer
+    for (auto & column : claheLookupTables)
+    {
+        for (auto & table : column)
+        {
+            table = new LOOKUP_TABLE;
+            assert(nullptr != table);
+        }
+    }
+    /*
     for (auto rowIdx = 0u; rowIdx < tilesVertical; ++rowIdx)
     {
         for (auto colIdx = 0u; colIdx < tilesHorizontal; ++colIdx)
@@ -65,7 +76,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             assert(nullptr != claheLookupTables[rowIdx][colIdx]);
         }
     }
-
+    */
     // Generate the look up table (mapping function) for each tile
     for (auto rowIdx = 0u; rowIdx < tilesVertical; ++rowIdx)
     {
@@ -115,7 +126,10 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             if (isCornerRegion(colIdx, rowIdx, tilesHorizontal, tilesVertical, input, closestTiles))
             {
                 // The closest tile is in index 0
-                output.at<uint8_t>(rowIdx, colIdx) = claheLookupTables[closestTiles[0].y][closestTiles[0].x]->operator[](input.at<uint8_t>(rowIdx, colIdx));
+                uint8_t currentPixelIntensity = input.at<uint8_t>(rowIdx, colIdx);
+                auto currentMappingTable = claheLookupTables[closestTiles[0].y][closestTiles[0].x];
+                uint8_t newPixelIntensity = currentMappingTable->operator[](currentPixelIntensity);
+                output.at<uint8_t>(rowIdx, colIdx) = newPixelIntensity;
             }
             else if (isBorderRegion(colIdx, rowIdx, tilesHorizontal,
                                     tilesVertical, input, closestTiles))
@@ -161,6 +175,14 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
     }
 
     // Clean up dynamically allocated memory
+    for (auto & column : claheLookupTables)
+    {
+        for (auto & table : column)
+        {
+            delete table;
+        }
+    }
+    /*
     for (auto rowIdx = 0u; rowIdx < tilesVertical; ++rowIdx)
     {
         for (auto colIdx = 0u; colIdx < tilesHorizontal; ++colIdx)
@@ -168,6 +190,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             delete claheLookupTables[rowIdx][colIdx];
         }
     }
+     */
 
     return 0;
 }
@@ -190,7 +213,7 @@ static void areaBasedGrayLevelMapping(IMAGE_HISTOGRAM const & histogram, LOOKUP_
         float ratioOfPixelsSeenToTotal = static_cast<float>(numberOfPixelsSeen) / numberOfPixels;
         // Readjust towards a more balanced image by moving pixels to where they "should" be
         outputTable->operator[](i) =
-            static_cast<unsigned char>(ratioOfPixelsSeenToTotal * outputTable->size());
+            static_cast<unsigned char>(ratioOfPixelsSeenToTotal * (outputTable->size() - 1));
     }
 }
 
@@ -217,8 +240,8 @@ static bool isCornerRegion(unsigned int x,
         return true;
     }
     // Is it in the bottom right corner?
-    else if (x > ((tileWidth * tilesHorizontal) - tileWidth / 2) &&
-             y > ((tileHeight * tilesVertical) - tileHeight / 2))
+    else if (x >= ((tileWidth * tilesHorizontal) - tileWidth / 2) &&
+             y >= ((tileHeight * tilesVertical) - tileHeight / 2))
     {
         outputTile[0] = {tilesHorizontal - 1, tilesVertical - 1};
         return true;
@@ -255,7 +278,7 @@ static bool isBorderRegion(unsigned int x,
         return true;
     }
     // Is it on the bottom border?
-    else if (y > ((tilesVertical * tileHeight) - tileHeight / 2))
+    else if (y >= ((tilesVertical * tileHeight) - tileHeight / 2))
     {
         // Tile coordinates in y direction are tilesVertical - 1
         // Now find the x-coordinates
@@ -277,14 +300,14 @@ static bool isBorderRegion(unsigned int x,
         return true;
     }
     // Is it on the right border?
-    else if (x > ((tilesHorizontal * tileWidth) - tileWidth / 2))
+    else if (x >= ((tilesHorizontal * tileWidth) - tileWidth / 2))
     {
         // Tile coordinates in x direction are tilesHorizontal - 1
         // Now find the y-coordinates
         unsigned int topY = getLowerTileCoordinate(y, tileHeight);
         unsigned int bottomY = topY + 1;
-        outputTile[0] = {0, topY};
-        outputTile[1] = {0, bottomY};
+        outputTile[0] = {tilesHorizontal-1, topY};
+        outputTile[1] = {tilesHorizontal-1, bottomY};
         return true;
     }
     // The pixel is not in a border

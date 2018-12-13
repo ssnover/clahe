@@ -176,11 +176,28 @@ PIXEL bilinearInterpolate(std::vector<PIXEL> & pixels, float outX, float outY)
 
 PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1, float outX, float outY)
 {
-    float x0 = pixel0.x;
-    float x1 = pixel1.x;
-    // Linear interpolation of the pixel's grayscale intensity
-    auto finalIntensity = static_cast<unsigned int>(pixel0.intensity + (static_cast<float>(pixel1.intensity) - pixel0.intensity) * ((outX - x0) / (x1 - x0)));
-    return {static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), finalIntensity};
+    if (pixel1.y == pixel0.y)
+    {
+        float x0 = pixel0.x;
+        float x1 = pixel1.x;
+        // Linear interpolation of the pixel's grayscale intensity
+        auto finalIntensity = static_cast<unsigned int>(pixel0.intensity +
+                                                        (static_cast<float>(pixel1.intensity) - pixel0.intensity) *
+                                                        ((outX - x0) / (x1 - x0)));
+        return {static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), finalIntensity};
+    }
+    else if (pixel1.x == pixel0.x)
+    {
+        float y0 = pixel0.y;
+        float y1 = pixel1.y;
+
+        auto finalIntensity = static_cast<unsigned int>(pixel0.intensity +
+                                                        (static_cast<float>(pixel1.intensity) - pixel0.intensity) *
+                                                        ((outY - y0) / (y1 - y0)));
+        return {static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), finalIntensity};
+    }
+    // Default case, should never occur in this program
+    return {0, 0, 0};
 }
 
 void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit)

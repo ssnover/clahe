@@ -6,12 +6,13 @@
  */
 
 #include <iostream>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include "clahe.hpp"
 
 int main()
 {
-    std::string const filename("/home/ssnover/develop/cv-631/clahe/sqrt_boats.jpg");
+    std::string const filename("/home/ssnover/develop/cv-631/clahe/happy_dog.jpg");
     auto image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
 
     cv::Mat processedImage;
@@ -20,6 +21,12 @@ int main()
     std::string const windowNameNewImage("Histogram Equalized Image");
     cv::namedWindow(windowNameNewImage, cv::WINDOW_NORMAL);
     cv::imshow(windowNameNewImage, processedImage);
+
+    cv::waitKey(0);
+
+    cv::destroyAllWindows();
+
+    cv::imwrite("output-clahe.jpg", processedImage);
 
     std::cout << "snover::clahe returned with " << retVal << std::endl;
 
