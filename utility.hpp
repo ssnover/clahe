@@ -52,6 +52,7 @@ struct IMAGE_HISTOGRAM
     }
 };
 
+// TODO: Overhaul this struct or it's usages, it's causing problems
 struct PIXEL
 {
     unsigned int x;
@@ -113,8 +114,10 @@ PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float o
 /*
  * Interpolates the value of a pixel based on it's linear distance in one
  * dimension from two pixels.
+ *
+ * TODO: Linear interpolation is completely incorrect right now...
  */
-PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1);
+PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1, float outX, float outY);
 
 /*
  * Finds all bins of the histogram with a quantity over the clip limit and

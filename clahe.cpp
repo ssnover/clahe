@@ -22,7 +22,7 @@ static void areaBasedGrayLevelMapping(IMAGE_HISTOGRAM const & histogram,
 static bool isCornerRegion(unsigned int x,
                            unsigned int y,
                            unsigned int tilesHorizontal,
-                           unsigned int tileVertical,
+                           unsigned int tilesVertical,
                            cv::Mat const & input,
                            std::array<TILE_COORDINATES, 4> & outputTile);
 
@@ -33,7 +33,7 @@ static bool isBorderRegion(unsigned int x,
                            cv::Mat const & input,
                            std::array<TILE_COORDINATES, 4> & outputTile);
 
-static bool getFourClosestTiles(unsigned int x,
+static void getFourClosestTiles(unsigned int x,
                                 unsigned int y,
                                 unsigned int tilesHorizontal,
                                 unsigned int tilesVertical,
@@ -41,8 +41,9 @@ static bool getFourClosestTiles(unsigned int x,
                                 std::array<TILE_COORDINATES, 4> & outputTile);
 
 static unsigned int getPixelCoordinateFromTileCoordinate(unsigned int tileCoordinate,
-                                                         unsigned int pixelsInDimension,
-                                                         unsigned int tilesInDimension);
+                                                         unsigned int pixelsPerTile);
+
+static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimension);
 
 [[nodiscard]] int clahe(cv::Mat const & input, cv::Mat & output, double clipLimit /* = 40.0 */) noexcept
 {
@@ -100,7 +101,6 @@ static unsigned int getPixelCoordinateFromTileCoordinate(unsigned int tileCoordi
         }
     }
 
-    // TODO: Interpolation between gray level mappings to form the output image
     // Now for each pixel, interpolate an intensity value from the gray level mappings of the closest tiles
     for (auto rowIdx = 0u; rowIdx < input.rows; ++rowIdx)
     {
@@ -110,11 +110,12 @@ static unsigned int getPixelCoordinateFromTileCoordinate(unsigned int tileCoordi
             std::array<TILE_COORDINATES, 4> closestTiles{};
             if (isCornerRegion(colIdx, rowIdx, tilesHorizontal, tilesVertical, input, closestTiles))
             {
-                // the closest tile is in index 0
+                // The closest tile is in index 0
                 output.at<uint8_t>(rowIdx, colIdx) =
                     claheLookupTables
                         ->at<LOOKUP_TABLE *>(closestTiles[0].y, closestTiles[0].x)
-                            ->operator[](input.at<uint8_t>(rowIdx, colIdx));
+                        ->
+                        operator[](input.at<uint8_t>(rowIdx, colIdx));
             }
             else if (isBorderRegion(colIdx, rowIdx, tilesHorizontal,
                                     tilesVertical, input, closestTiles))
@@ -122,26 +123,24 @@ static unsigned int getPixelCoordinateFromTileCoordinate(unsigned int tileCoordi
                 // The two closest tiles are indices 0 and 1
                 PIXEL pixel0 = {
                     // Get the tile center's xy-coordinates
-                    getPixelCoordinateFromTileCoordinate(
-                        closestTiles[0].x, input.cols, tilesHorizontal),
-                    getPixelCoordinateFromTileCoordinate(
-                        closestTiles[0].y, input.rows, tilesVertical),
+                    getPixelCoordinateFromTileCoordinate(closestTiles[0].x, tileWidth),
+                    getPixelCoordinateFromTileCoordinate(closestTiles[0].y, tileHeight),
                     // Plug the input pixel's intensity into the tile's lookup table
                     claheLookupTables
                         ->at<LOOKUP_TABLE *>(closestTiles[0].y, closestTiles[0].x)
-                            ->operator[](input.at<uint8_t>(rowIdx, colIdx))};
+                        ->
+                        operator[](input.at<uint8_t>(rowIdx, colIdx))};
                 PIXEL pixel1 = {
                     // Get the tile center's xy-coordinates
-                    getPixelCoordinateFromTileCoordinate(
-                        closestTiles[1].x, input.cols, tilesHorizontal),
-                    getPixelCoordinateFromTileCoordinate(
-                        closestTiles[1].y, input.rows, tilesVertical),
+                    getPixelCoordinateFromTileCoordinate(closestTiles[1].x, tileWidth),
+                    getPixelCoordinateFromTileCoordinate(closestTiles[1].y, tileHeight),
                     // Plug the input pixel's intensity into the tile's lookup table
                     claheLookupTables
                         ->at<LOOKUP_TABLE *>(closestTiles[1].y, closestTiles[1].x)
-                            ->operator[](input.at<uint8_t>(rowIdx, colIdx))};
+                        ->
+                        operator[](input.at<uint8_t>(rowIdx, colIdx))};
                 output.at<uint8_t>(rowIdx, colIdx) =
-                    static_cast<uint8_t>(linearInterpolate(pixel0, pixel1).intensity);
+                    static_cast<uint8_t>(linearInterpolate(pixel0, pixel1, colIdx, rowIdx).intensity);
             }
             else
             {
@@ -155,21 +154,17 @@ static unsigned int getPixelCoordinateFromTileCoordinate(unsigned int tileCoordi
                 {
                     tileCenters.push_back(
                         // Get the x-coordinate, y-coordinate of each tile center
-                        {getPixelCoordinateFromTileCoordinate(tile.x, input.cols, tilesHorizontal),
-                         getPixelCoordinateFromTileCoordinate(tile.y, input.rows, tilesVertical),
+                        {getPixelCoordinateFromTileCoordinate(tile.x, tileWidth),
+                         getPixelCoordinateFromTileCoordinate(tile.y, tileHeight),
                          // Get the look-up table for this tile and plug this pixel's intensity in
                          claheLookupTables->at<LOOKUP_TABLE *>(tile.y, tile.x)
-                             ->operator[](input.at<uint8_t>(rowIdx, colIdx))});
+                             ->
+                             operator[](input.at<uint8_t>(rowIdx, colIdx))});
                 }
                 // Interpolate between the four pixels and assign it to the output image
                 output.at<uint8_t>(rowIdx, colIdx) = static_cast<uint8_t>(
                     bilinearInterpolate(tileCenters, colIdx, rowIdx).intensity);
             }
-            // Get the intensity value for each of these tile's mappings
-
-            // Run bilinear interpolation to get the resulting new grayscale value
-
-            // Assign it to the output image
         }
     }
 
@@ -196,6 +191,139 @@ static void areaBasedGrayLevelMapping(IMAGE_HISTOGRAM const & histogram, LOOKUP_
         outputTable->operator[](i) =
             static_cast<unsigned char>(ratioOfPixelsSeenToTotal * outputTable->size());
     }
+}
+
+static bool isCornerRegion(unsigned int x,
+                           unsigned int y,
+                           unsigned int tilesHorizontal,
+                           unsigned int tilesVertical,
+                           cv::Mat const & input,
+                           std::array<TILE_COORDINATES, 4> & outputTile)
+{
+    unsigned int const tileWidth(input.cols / tilesHorizontal);
+    unsigned int const tileHeight(input.rows / tilesVertical);
+    // Is it in the top left corner?
+    if (x <= (tileWidth / 2) && y <= (tileHeight / 2))
+    {
+        // Tile coordinate is 0, 0
+        outputTile[0] = {0, 0};
+        return true;
+    }
+    // Is it in the top right corner?
+    else if (x > ((tileWidth * tilesHorizontal) - tileWidth / 2) && y <= (tileHeight / 2))
+    {
+        outputTile[0] = {tilesHorizontal - 1, 0};
+        return true;
+    }
+    // Is it in the bottom right corner?
+    else if (x > ((tileWidth * tilesHorizontal) - tileWidth / 2) &&
+             y > ((tileHeight * tilesVertical) - tileHeight / 2))
+    {
+        outputTile[0] = {tilesHorizontal - 1, tilesVertical - 1};
+        return true;
+    }
+    // Is it in the bottom left corner?
+    else if (x <= (tileWidth / 2) && y > ((tileHeight * tilesVertical) - tileHeight / 2))
+    {
+        outputTile[0] = {0, tilesVertical - 1};
+        return true;
+    }
+    // The pixel is not in a corner
+    return false;
+}
+
+static bool isBorderRegion(unsigned int x,
+                           unsigned int y,
+                           unsigned int tilesHorizontal,
+                           unsigned int tilesVertical,
+                           cv::Mat const & input,
+                           std::array<TILE_COORDINATES, 4> & outputTile)
+{
+    unsigned int const tileWidth(input.cols / tilesHorizontal);
+    unsigned int const tileHeight(input.rows / tilesVertical);
+
+    // Is it on the top border?
+    if (y <= (tileHeight / 2))
+    {
+        // Tile coordinates in y direction are 0
+        // Now find tile x-coordinates
+        unsigned int leftX = getLowerTileCoordinate(x, tileWidth);
+        unsigned int rightX = leftX + 1;
+        outputTile[0] = {leftX, 0};
+        outputTile[1] = {rightX, 0};
+        return true;
+    }
+    // Is it on the bottom border?
+    else if (y > ((tilesVertical * tileHeight) - tileHeight / 2))
+    {
+        // Tile coordinates in y direction are tilesVertical - 1
+        // Now find the x-coordinates
+        unsigned int leftX = getLowerTileCoordinate(x, tileWidth);
+        unsigned int rightX = leftX + 1;
+        outputTile[0] = {leftX, tilesVertical - 1};
+        outputTile[1] = {rightX, tilesVertical - 1};
+        return true;
+    }
+    // Is it on the left border?
+    else if (x <= (tileWidth / 2))
+    {
+        // Tile coordinates in x direction are 0
+        // Now find the y-coordinates
+        unsigned int topY = getLowerTileCoordinate(y, tileHeight);
+        unsigned int bottomY = topY + 1;
+        outputTile[0] = {0, topY};
+        outputTile[1] = {0, bottomY};
+        return true;
+    }
+    // Is it on the right border?
+    else if (x > ((tilesHorizontal * tileWidth) - tileWidth / 2))
+    {
+        // Tile coordinates in x direction are tilesHorizontal - 1
+        // Now find the y-coordinates
+        unsigned int topY = getLowerTileCoordinate(y, tileHeight);
+        unsigned int bottomY = topY + 1;
+        outputTile[0] = {0, topY};
+        outputTile[1] = {0, bottomY};
+        return true;
+    }
+    // The pixel is not in a border
+    return false;
+}
+
+static void getFourClosestTiles(unsigned int x,
+                                unsigned int y,
+                                unsigned int tilesHorizontal,
+                                unsigned int tilesVertical,
+                                cv::Mat const & input,
+                                std::array<TILE_COORDINATES, 4> & outputTile)
+{
+    unsigned int const tileWidth(input.cols / tilesHorizontal);
+    unsigned int const tileHeight(input.rows / tilesVertical);
+
+    unsigned int leftX = getLowerTileCoordinate(x, tileWidth);
+    unsigned int rightX = leftX + 1;
+    unsigned int topY = getLowerTileCoordinate(y, tileHeight);
+    unsigned int bottomY = topY + 1;
+
+    // Top left closest
+    outputTile[0] = {leftX, topY};
+    // Top right closest
+    outputTile[1] = {rightX, topY};
+    // Bottom right closest
+    outputTile[2] = {rightX, bottomY};
+    // Bottom left closest
+    outputTile[3] = {leftX, bottomY};
+}
+
+static unsigned int getPixelCoordinateFromTileCoordinate(unsigned int tileCoordinate,
+                                                         unsigned int pixelsPerTile)
+{
+    return (pixelsPerTile / 2) + (tileCoordinate * pixelsPerTile);
+}
+
+static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimension)
+{
+    return static_cast<unsigned int>((pixelDimension - (tileDimension / 2)) / tileDimension);
 }
 
 } // namespace snover

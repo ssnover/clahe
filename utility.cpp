@@ -157,6 +157,7 @@ PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float o
     PIXEL retVal{static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), 0};
 
     // Sort the four pixels into the order of top left, bottom left, top right, bottom right
+    // TODO: Fix this sort
     std::sort(pixels.begin(), pixels.end(), [](PIXEL lhs, PIXEL rhs) {
         if (lhs.x < rhs.x)
         {
@@ -173,13 +174,23 @@ PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float o
     float x1 = pixels[3].x;
     float y1 = pixels[3].y;
 
-    // bilinear interpolation
-    retVal.intensity = static_cast<unsigned int>((y1 - outY) / (y1 - y0)) *
+    // Bilinear interpolation function
+    retVal.intensity = static_cast<unsigned int>(((y1 - outY) / (y1 - y0)) *
                            ((x1 - outX) / (x1 - x0) * pixels[0].intensity +
                             (outX - x0) / (x1 - x0) * pixels[2].intensity) +
                        ((outY - y0) / (y1 - y0)) *
                            ((x1 - outX) / (x1 - x0) * pixels[1].intensity +
-                            (outX - x0) / (x1 - x0) * pixels[3].intensity);
+                            (outX - x0) / (x1 - x0) * pixels[3].intensity));
+    return retVal;
+}
+
+PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1, float outX, float outY)
+{
+    float x0 = pixel0.x;
+    float x1 = pixel1.x;
+    // Linear interpolation of the pixel's grayscale intensity
+    auto finalIntensity = static_cast<unsigned int>(pixel0.intensity + (static_cast<float>(pixel1.intensity) - pixel0.intensity) * ((outX - x0) / (x1 - x0)));
+    return {static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), finalIntensity};
 }
 
 void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit)

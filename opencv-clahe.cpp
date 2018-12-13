@@ -31,7 +31,7 @@ int main(int argc, char ** argv)
     }
 
     // find the histogram of the original image
-    snover::IMAGE_HISTOGRAM grayHistogram(inputImageFilename);
+    snover::IMAGE_HISTOGRAM grayHistogram;
     snover::generateGrayscaleHistogram(image, grayHistogram);
 
     cv::Mat histogramImage;
@@ -47,7 +47,7 @@ int main(int argc, char ** argv)
     clahe->apply(image, claheImage);
 
     // find the histogram of the CLAHE image
-    snover::IMAGE_HISTOGRAM claheHistogram("CLAHEd Image");
+    snover::IMAGE_HISTOGRAM claheHistogram;
     snover::generateGrayscaleHistogram(claheImage, claheHistogram);
     cv::Mat claheHistImage;
     snover::createHistogramPlot(claheHistogram, 512, 512, claheHistImage);
