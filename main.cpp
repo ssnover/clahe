@@ -11,11 +11,15 @@
 
 int main()
 {
-    std::string const filename("sqrt_boats.jpg");
-    auto image = cv::imread(filename);
+    std::string const filename("/home/ssnover/develop/cv-631/clahe/sqrt_boats.jpg");
+    auto image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
 
     cv::Mat processedImage;
     auto retVal = snover::clahe(image, processedImage);
+
+    std::string const windowNameNewImage("Histogram Equalized Image");
+    cv::namedWindow(windowNameNewImage, cv::WINDOW_NORMAL);
+    cv::imshow(windowNameNewImage, processedImage);
 
     std::cout << "snover::clahe returned with " << retVal << std::endl;
 

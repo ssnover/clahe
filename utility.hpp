@@ -52,12 +52,28 @@ struct IMAGE_HISTOGRAM
     }
 };
 
-// TODO: Overhaul this struct or it's usages, it's causing problems
 struct PIXEL
 {
     unsigned int x;
     unsigned int y;
     unsigned int intensity;
+
+    PIXEL(unsigned int _x, unsigned int _y, unsigned int _intensity) : x(_x), y(_y), intensity(_intensity)
+    {
+        // Empty
+    }
+
+    bool operator<(PIXEL const & rhs) const
+    {
+        if (this->x < rhs.x)
+        {
+            return true;
+        }
+        else
+        {
+            return this->y < rhs.y;
+        }
+    }
 };
 
 /*
@@ -94,7 +110,7 @@ float calculateEntropy(cv::Mat const & image);
 /*
  * Gets a rectangular subregion of the image.
  */
-int getSubregionOfImage(cv::Mat const & input, cv::Rect & region, cv::Mat & output);
+int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat & output);
 
 /*
  * Classifies the image into one of three categories based on where the highest
@@ -109,7 +125,7 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
  * Interpolates the value of a pixel based on it's linear distance in two
  * dimensions from four pixels.
  */
-PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float outY);
+PIXEL bilinearInterpolate(std::vector<PIXEL> & pixels, float outX, float outY);
 
 /*
  * Interpolates the value of a pixel based on it's linear distance in one

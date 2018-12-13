@@ -147,7 +147,7 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
     return static_cast<GRAY_LEVEL>(maxLevel);
 }
 
-PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float outY)
+PIXEL bilinearInterpolate(std::vector<PIXEL> & pixels, float outX, float outY)
 {
     if (pixels.size() != 4)
     {
@@ -157,17 +157,7 @@ PIXEL bilinearInterpolate(std::vector<PIXEL> const & pixels, float outX, float o
     PIXEL retVal{static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), 0};
 
     // Sort the four pixels into the order of top left, bottom left, top right, bottom right
-    // TODO: Fix this sort
-    std::sort(pixels.begin(), pixels.end(), [](PIXEL lhs, PIXEL rhs) {
-        if (lhs.x < rhs.x)
-        {
-            return true;
-        }
-        else
-        {
-            return lhs.y < rhs.y;
-        }
-    });
+    std::sort(pixels.begin(), pixels.end());
 
     float x0 = pixels[0].x;
     float y0 = pixels[0].y;
