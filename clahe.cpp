@@ -3,14 +3,12 @@
  * purpose: Implementation of a generic adaptive histogram equalization algorithm.
  */
 
-#include "clahe.hpp"
+#include <array>
 #include "opencv2/opencv.hpp"
-#include "utility.hpp"
+#include "clahe.hpp"
 
 namespace snover
 {
-
-using LOOKUP_TABLE = std::array<uint8_t, 256>;
 
 struct TILE_COORDINATES
 {
@@ -49,6 +47,11 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
 
 [[nodiscard]] int clahe(cv::Mat const & input, cv::Mat & output, double clipLimit /* = 40.0 */) noexcept
 {
+    return clahe(input, output, areaBasedGrayLevelMapping, clipLimit);
+}
+
+[[nodiscard]] int clahe(cv::Mat const & input, cv::Mat & output, GRAY_LEVEL_MAPPING_FUNCTION mapping, double clipLimit /* = 40.0 */) noexcept
+{
     // Data on the tiles the image will be split into
     unsigned int const tilesHorizontal(8), tilesVertical(8);
     unsigned int const tileWidth(input.cols / tilesHorizontal);
@@ -67,16 +70,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             assert(nullptr != table);
         }
     }
-    /*
-    for (auto rowIdx = 0u; rowIdx < tilesVertical; ++rowIdx)
-    {
-        for (auto colIdx = 0u; colIdx < tilesHorizontal; ++colIdx)
-        {
-            claheLookupTables[rowIdx][colIdx] = new LOOKUP_TABLE;
-            assert(nullptr != claheLookupTables[rowIdx][colIdx]);
-        }
-    }
-    */
+
     // Generate the look up table (mapping function) for each tile
     for (auto rowIdx = 0u; rowIdx < tilesVertical; ++rowIdx)
     {
@@ -111,8 +105,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             clipHistogram(tileHistogram, clipLimit);
 
             // Perform gray level mapping
-            areaBasedGrayLevelMapping(
-                tileHistogram, claheLookupTables[rowIdx][colIdx]);
+            mapping(tileHistogram, claheLookupTables[rowIdx][colIdx]);
         }
     }
 
@@ -127,8 +120,10 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             {
                 // The closest tile is in index 0
                 uint8_t currentPixelIntensity = input.at<uint8_t>(rowIdx, colIdx);
-                auto currentMappingTable = claheLookupTables[closestTiles[0].y][closestTiles[0].x];
-                uint8_t newPixelIntensity = currentMappingTable->operator[](currentPixelIntensity);
+                auto currentMappingTable =
+                    claheLookupTables[closestTiles[0].y][closestTiles[0].x];
+                uint8_t newPixelIntensity =
+                    currentMappingTable->operator[](currentPixelIntensity);
                 output.at<uint8_t>(rowIdx, colIdx) = newPixelIntensity;
             }
             else if (isBorderRegion(colIdx, rowIdx, tilesHorizontal,
@@ -140,15 +135,17 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
                     getPixelCoordinateFromTileCoordinate(closestTiles[0].x, tileWidth),
                     getPixelCoordinateFromTileCoordinate(closestTiles[0].y, tileHeight),
                     // Plug the input pixel's intensity into the tile's lookup table
-                    claheLookupTables[closestTiles[0].y][closestTiles[0].x]->operator[](input.at<uint8_t>(rowIdx, colIdx))};
+                    claheLookupTables[closestTiles[0].y][closestTiles[0].x]->operator[](
+                        input.at<uint8_t>(rowIdx, colIdx))};
                 PIXEL pixel1 = {
                     // Get the tile center's xy-coordinates
                     getPixelCoordinateFromTileCoordinate(closestTiles[1].x, tileWidth),
                     getPixelCoordinateFromTileCoordinate(closestTiles[1].y, tileHeight),
                     // Plug the input pixel's intensity into the tile's lookup table
-                    claheLookupTables[closestTiles[1].y][closestTiles[1].x]->operator[](input.at<uint8_t>(rowIdx, colIdx))};
-                output.at<uint8_t>(rowIdx, colIdx) =
-                    static_cast<uint8_t>(linearInterpolate(pixel0, pixel1, colIdx, rowIdx).intensity);
+                    claheLookupTables[closestTiles[1].y][closestTiles[1].x]->operator[](
+                        input.at<uint8_t>(rowIdx, colIdx))};
+                output.at<uint8_t>(rowIdx, colIdx) = static_cast<uint8_t>(
+                    linearInterpolate(pixel0, pixel1, colIdx, rowIdx).intensity);
             }
             else
             {
@@ -165,7 +162,8 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
                         {getPixelCoordinateFromTileCoordinate(tile.x, tileWidth),
                          getPixelCoordinateFromTileCoordinate(tile.y, tileHeight),
                          // Get the look-up table for this tile and plug this pixel's intensity in
-                         claheLookupTables[tile.y][tile.x]->operator[](input.at<uint8_t>(rowIdx, colIdx))});
+                         claheLookupTables[tile.y][tile.x]->operator[](
+                             input.at<uint8_t>(rowIdx, colIdx))});
                 }
                 // Interpolate between the four pixels and assign it to the output image
                 output.at<uint8_t>(rowIdx, colIdx) = static_cast<uint8_t>(
@@ -182,15 +180,6 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             delete table;
         }
     }
-    /*
-    for (auto rowIdx = 0u; rowIdx < tilesVertical; ++rowIdx)
-    {
-        for (auto colIdx = 0u; colIdx < tilesHorizontal; ++colIdx)
-        {
-            delete claheLookupTables[rowIdx][colIdx];
-        }
-    }
-     */
 
     return 0;
 }
@@ -212,8 +201,8 @@ static void areaBasedGrayLevelMapping(IMAGE_HISTOGRAM const & histogram, LOOKUP_
         // How many of the pixels in this histogram have we seen?
         float ratioOfPixelsSeenToTotal = static_cast<float>(numberOfPixelsSeen) / numberOfPixels;
         // Readjust towards a more balanced image by moving pixels to where they "should" be
-        outputTable->operator[](i) =
-            static_cast<unsigned char>(ratioOfPixelsSeenToTotal * (outputTable->size() - 1));
+        outputTable->operator[](i) = static_cast<unsigned char>(
+            ratioOfPixelsSeenToTotal * (outputTable->size() - 1));
     }
 }
 
@@ -306,8 +295,8 @@ static bool isBorderRegion(unsigned int x,
         // Now find the y-coordinates
         unsigned int topY = getLowerTileCoordinate(y, tileHeight);
         unsigned int bottomY = topY + 1;
-        outputTile[0] = {tilesHorizontal-1, topY};
-        outputTile[1] = {tilesHorizontal-1, bottomY};
+        outputTile[0] = {tilesHorizontal - 1, topY};
+        outputTile[1] = {tilesHorizontal - 1, bottomY};
         return true;
     }
     // The pixel is not in a border

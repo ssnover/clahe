@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <functional>
+#include "utility.hpp"
+
 /*
  * Forward Declarations
  */
@@ -21,6 +24,10 @@ class Mat;
 namespace snover
 {
 
+using LOOKUP_TABLE = std::array<uint8_t, 256>;
+
+using GRAY_LEVEL_MAPPING_FUNCTION = std::function<void(IMAGE_HISTOGRAM const & histogram, LOOKUP_TABLE * outputTable)>;
+
 /*
  * Takes a grayscale image and runs a CLAHE algorithm on it.
  *
@@ -34,5 +41,10 @@ namespace snover
 [[nodiscard]] int clahe(cv::Mat const & input,
                      cv::Mat & output,
                      double clipLimit = 40.0) noexcept;
+
+[[nodiscard]] int clahe(cv::Mat const & input,
+                        cv::Mat & output,
+                        GRAY_LEVEL_MAPPING_FUNCTION mapping,
+                        double clipLimit = 40.0) noexcept;
 
 } // namespace snover

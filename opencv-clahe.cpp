@@ -8,6 +8,7 @@
 #include "opencv2/opencv.hpp"
 #include "utility.hpp"
 #include <iostream>
+#include <chrono>
 
 int main(int argc, char ** argv)
 {
@@ -43,8 +44,12 @@ int main(int argc, char ** argv)
 
     // generate CLAHEd image
     cv::Mat claheImage;
+    auto start = std::chrono::high_resolution_clock::now();
     auto clahe = cv::createCLAHE();
     clahe->apply(image, claheImage);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "Duration (us): " << duration.count() << std::endl;
 
     // find the histogram of the CLAHE image
     snover::IMAGE_HISTOGRAM claheHistogram;

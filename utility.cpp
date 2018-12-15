@@ -42,7 +42,8 @@ int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
                            static_cast<int>(height - histogram[i - 1] / verticalScaleFactor)), // point1
                  cv::Point(binWidth * i,
                            static_cast<int>(height - histogram[i] / verticalScaleFactor)), // point 2
-                 cv::Scalar(255, 255, 255)); // line color
+                 cv::Scalar(255, 255, 255), // line color
+                 2); // line thickness
     }
 
     return 0;
@@ -205,22 +206,20 @@ void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit)
     unsigned int numberOfPixelsOverLimit(0);
 
     // Clip each bin quantity and count how many were excess of the clip limit
-    for (auto i = 0u; i < 256; ++i)
+    for (auto binIndex = 0u; binIndex < 256; ++binIndex)
     {
-        if (histogram[i] > clipLimit)
+        if (histogram[binIndex] > clipLimit)
         {
-            numberOfPixelsOverLimit += histogram[i] - clipLimit;
-            histogram.histogram->operator[](i) = static_cast<unsigned int>(clipLimit);
+            numberOfPixelsOverLimit += histogram[binIndex] - clipLimit;
+            histogram.histogram->operator[](binIndex) = static_cast<unsigned int>(clipLimit);
         }
     }
 
-    // Iterate over the bins and add a pixel to the quantity of the bins until
-    // no more pixels are left.
-    // Using a uint8_t to take advantage of overflow.
-    uint8_t binIndex(0);
-    while (numberOfPixelsOverLimit > 0)
+    unsigned int excessPixelsPerBin(numberOfPixelsOverLimit / 256);
+
+    for (auto binIndex = 0u; binIndex < 256; ++binIndex)
     {
-        histogram.histogram->operator[](binIndex++) = numberOfPixelsOverLimit--;
+        histogram.histogram->operator[](binIndex) += excessPixelsPerBin;
     }
 }
 
