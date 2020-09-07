@@ -9,7 +9,7 @@ namespace snover
 {
 int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHistogram)
 {
-    if (outputHistogram.histogram->size() != 256)
+    if (outputHistogram.histogram.size() != 256)
     {
         return -1;
     }
@@ -18,7 +18,7 @@ int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHi
     {
         for (auto colIdx = 0u; colIdx < image.cols; ++colIdx)
         {
-            (*(outputHistogram.histogram))[image.at<uint8_t>(rowIdx, colIdx)]++;
+            (outputHistogram.histogram)[image.at<uint8_t>(rowIdx, colIdx)]++;
         }
     }
 
@@ -111,9 +111,9 @@ int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat 
 
 GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
 {
-    unsigned long numberOfPixels = [&histogram]() {
+    unsigned long const numberOfPixels = [&histogram]() {
         unsigned long total = 0;
-        for (auto & iter : *(histogram.histogram))
+        for (auto & iter : histogram.histogram)
         {
             total += iter;
         }
@@ -211,7 +211,7 @@ void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit)
         if (histogram[binIndex] > clipLimit)
         {
             numberOfPixelsOverLimit += histogram[binIndex] - clipLimit;
-            histogram.histogram->operator[](binIndex) = static_cast<unsigned int>(clipLimit);
+            histogram.histogram[binIndex] = static_cast<unsigned int>(clipLimit);
         }
     }
 
@@ -219,7 +219,7 @@ void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit)
 
     for (auto binIndex = 0u; binIndex < 256; ++binIndex)
     {
-        histogram.histogram->operator[](binIndex) += excessPixelsPerBin;
+        histogram.histogram[binIndex] += excessPixelsPerBin;
     }
 }
 

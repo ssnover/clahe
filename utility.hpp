@@ -25,17 +25,12 @@ enum GRAY_LEVEL : uint8_t
 
 struct IMAGE_HISTOGRAM
 {
-    std::vector<unsigned int> * histogram;
+    std::vector<unsigned int> histogram;
 
     explicit IMAGE_HISTOGRAM()
-        : histogram(new std::vector<unsigned int>(256, 0))
+        : histogram(256, 0)
     {
         // Empty
-    }
-
-    ~IMAGE_HISTOGRAM()
-    {
-        delete histogram;
     }
 
     friend GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
@@ -43,12 +38,12 @@ struct IMAGE_HISTOGRAM
 
     inline unsigned int operator[](unsigned int index) const noexcept
     {
-        return (*histogram)[index];
+        return histogram[index];
     }
 
     unsigned int max() const
     {
-        return *std::max_element(histogram->begin(), histogram->end());
+        return *std::max_element(histogram.cbegin(), histogram.cend());
     }
 };
 
@@ -130,8 +125,6 @@ PIXEL bilinearInterpolate(std::vector<PIXEL> & pixels, float outX, float outY);
 /*
  * Interpolates the value of a pixel based on it's linear distance in one
  * dimension from two pixels.
- *
- * TODO: Linear interpolation is completely incorrect right now...
  */
 PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1, float outX, float outY);
 
