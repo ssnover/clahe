@@ -16,25 +16,25 @@ class Mat;
 
 namespace snover
 {
-enum GRAY_LEVEL : uint8_t
+enum GrayLevel : uint8_t
 {
     LOW = 0,
     MIDDLE = 1,
     HIGH = 2,
 };
 
-struct IMAGE_HISTOGRAM
+struct ImageHistogram
 {
     std::vector<unsigned int> histogram;
 
-    explicit IMAGE_HISTOGRAM()
+    explicit ImageHistogram()
         : histogram(256, 0)
     {
         // Empty
     }
 
-    friend GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
-    friend void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit);
+    friend GrayLevel classifyGrayLevel(ImageHistogram const & histogram);
+    friend void clipHistogram(ImageHistogram & histogram, double clipLimit);
 
     inline unsigned int operator[](unsigned int index) const noexcept
     {
@@ -47,18 +47,18 @@ struct IMAGE_HISTOGRAM
     }
 };
 
-struct PIXEL
+struct Pixel
 {
     unsigned int x;
     unsigned int y;
     unsigned int intensity;
 
-    PIXEL(unsigned int _x, unsigned int _y, unsigned int _intensity) : x(_x), y(_y), intensity(_intensity)
+    Pixel(unsigned int _x, unsigned int _y, unsigned int _intensity) : x(_x), y(_y), intensity(_intensity)
     {
         // Empty
     }
 
-    bool operator<(PIXEL const & rhs) const
+    bool operator<(Pixel const & rhs) const
     {
         if (this->x < rhs.x)
         {
@@ -77,13 +77,13 @@ struct PIXEL
  * image: An OpenCV matrix containing a grayscale image.
  * outputHistogram: Structure in which the output is to be populated.
  */
-int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHistogram);
+int generateGrayscaleHistogram(cv::Mat const & image, ImageHistogram & outputHistogram);
 
 /*
  * Takes in a histogram and parameters for the size of the output plot image
  * and creates the plot image.
  */
-int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
+int createHistogramPlot(ImageHistogram const & histogram,
                         unsigned int width,
                         unsigned int height,
                         cv::Mat & outputImage);
@@ -92,7 +92,7 @@ int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
  * Takes in a histogram and parameters for the size of the output plot image
  * and creates a plot image of a CDF for the histogram.
  */
-int createCDFPlot(IMAGE_HISTOGRAM const & histogram,
+int createCDFPlot(ImageHistogram const & histogram,
                   unsigned int width,
                   unsigned int height,
                   cv::Mat & outputImage);
@@ -114,25 +114,25 @@ int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat 
  * Based on gray level definition of Youlian Zhu and Cheng Huang in "An Adaptive
  * Histogram Equalization Algorithm on the Image Gray Level Mapping".
  */
-GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram);
+GrayLevel classifyGrayLevel(ImageHistogram const & histogram);
 
 /*
  * Interpolates the value of a pixel based on it's linear distance in two
  * dimensions from four pixels.
  */
-PIXEL bilinearInterpolate(std::vector<PIXEL> & pixels, float outX, float outY);
+Pixel bilinearInterpolate(std::vector<Pixel> & pixels, float outX, float outY);
 
 /*
  * Interpolates the value of a pixel based on it's linear distance in one
  * dimension from two pixels.
  */
-PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1, float outX, float outY);
+Pixel linearInterpolate(Pixel pixel0, Pixel pixel1, float outX, float outY);
 
 /*
  * Finds all bins of the histogram with a quantity over the clip limit and
  * removes the excess. The number of excess is added as equally as possible to
  * all bins in the histogram.
  */
-void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit);
+void clipHistogram(ImageHistogram & histogram, double clipLimit);
 
 } // namespace snover

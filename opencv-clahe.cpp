@@ -32,7 +32,7 @@ int main(int argc, char ** argv)
     }
 
     // find the histogram of the original image
-    snover::IMAGE_HISTOGRAM grayHistogram;
+    snover::ImageHistogram grayHistogram;
     snover::generateGrayscaleHistogram(image, grayHistogram);
 
     cv::Mat histogramImage;
@@ -52,7 +52,7 @@ int main(int argc, char ** argv)
     std::cout << "Duration (us): " << duration.count() << std::endl;
 
     // find the histogram of the CLAHE image
-    snover::IMAGE_HISTOGRAM claheHistogram;
+    snover::ImageHistogram claheHistogram;
     snover::generateGrayscaleHistogram(claheImage, claheHistogram);
     cv::Mat claheHistImage;
     snover::createHistogramPlot(claheHistogram, 512, 512, claheHistImage);

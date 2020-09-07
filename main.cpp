@@ -12,7 +12,7 @@
 #include "clahe.hpp"
 #include "utility.hpp"
 
-static void unityMapping(snover::IMAGE_HISTOGRAM const & histogram, snover::LOOKUP_TABLE * outputTable)
+static void unityMapping(snover::ImageHistogram const & histogram, snover::LookupTable * outputTable)
 {
     for (auto i = 0u; i < outputTable->size(); ++i)
     {
@@ -53,7 +53,7 @@ int main(int argc, char ** argv)
     cv::imshow(windowNameNewImage, processedImage);
 
     // Get the histogram of the original image
-    snover::IMAGE_HISTOGRAM originalHistogram;
+    snover::ImageHistogram originalHistogram;
     snover::generateGrayscaleHistogram(image, originalHistogram);
     cv::Mat originalHistogramImage;
     snover::createHistogramPlot(originalHistogram, 512, 512, originalHistogramImage);
@@ -63,7 +63,7 @@ int main(int argc, char ** argv)
     cv::imshow(windowOriginalHistogram, originalHistogramImage);
 
     // Get the histogram of the new image
-    snover::IMAGE_HISTOGRAM claheHistogram;
+    snover::ImageHistogram claheHistogram;
     snover::generateGrayscaleHistogram(processedImage, claheHistogram);
     cv::Mat claheHistImage;
     snover::createHistogramPlot(claheHistogram, 512, 512, claheHistImage);

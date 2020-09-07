@@ -24,9 +24,9 @@ class Mat;
 namespace snover
 {
 
-using LOOKUP_TABLE = std::array<uint8_t, 256>;
+using LookupTable = std::array<uint8_t, 256>;
 
-using GRAY_LEVEL_MAPPING_FUNCTION = std::function<void(IMAGE_HISTOGRAM const & histogram, LOOKUP_TABLE * outputTable)>;
+using GrayLevelMappingFunction = std::function<void(ImageHistogram const & histogram, LookupTable * outputTable)>;
 
 /*
  * Takes a grayscale image and runs a CLAHE algorithm on it.
@@ -44,7 +44,7 @@ using GRAY_LEVEL_MAPPING_FUNCTION = std::function<void(IMAGE_HISTOGRAM const & h
 
 [[nodiscard]] int clahe(cv::Mat const & input,
                         cv::Mat & output,
-                        GRAY_LEVEL_MAPPING_FUNCTION mapping,
+                        GrayLevelMappingFunction mapping,
                         double clipLimit = 40.0) noexcept;
 
 } // namespace snover

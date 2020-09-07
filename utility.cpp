@@ -7,7 +7,7 @@
 
 namespace snover
 {
-int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHistogram)
+int generateGrayscaleHistogram(cv::Mat const & image, ImageHistogram & outputHistogram)
 {
     if (outputHistogram.histogram.size() != 256)
     {
@@ -25,7 +25,7 @@ int generateGrayscaleHistogram(cv::Mat const & image, IMAGE_HISTOGRAM & outputHi
     return 0;
 }
 
-int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
+int createHistogramPlot(ImageHistogram const & histogram,
                         unsigned int width,
                         unsigned int height,
                         cv::Mat & outputImage)
@@ -49,7 +49,7 @@ int createHistogramPlot(IMAGE_HISTOGRAM const & histogram,
     return 0;
 }
 
-int createCDFPlot(IMAGE_HISTOGRAM const & histogram,
+int createCDFPlot(ImageHistogram const & histogram,
                   unsigned int width,
                   unsigned int height,
                   cv::Mat & outputImage)
@@ -83,7 +83,7 @@ int createCDFPlot(IMAGE_HISTOGRAM const & histogram,
 
 float calculateEntropy(cv::Mat const & image)
 {
-    IMAGE_HISTOGRAM temp;
+    ImageHistogram temp;
     generateGrayscaleHistogram(image, temp);
 
     auto totalPixels(image.rows * image.cols);
@@ -109,7 +109,7 @@ int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat 
     return 0;
 }
 
-GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
+GrayLevel classifyGrayLevel(ImageHistogram const & histogram)
 {
     unsigned long const numberOfPixels = [&histogram]() {
         unsigned long total = 0;
@@ -145,17 +145,17 @@ GRAY_LEVEL classifyGrayLevel(IMAGE_HISTOGRAM const & histogram)
         maxLevel = 2;
     }
 
-    return static_cast<GRAY_LEVEL>(maxLevel);
+    return static_cast<GrayLevel>(maxLevel);
 }
 
-PIXEL bilinearInterpolate(std::vector<PIXEL> & pixels, float outX, float outY)
+Pixel bilinearInterpolate(std::vector<Pixel> & pixels, float outX, float outY)
 {
     if (pixels.size() != 4)
     {
         abort();
     }
 
-    PIXEL retVal{static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), 0};
+    Pixel retVal{static_cast<unsigned int>(outX), static_cast<unsigned int>(outY), 0};
 
     // Sort the four pixels into the order of top left, bottom left, top right, bottom right
     std::sort(pixels.begin(), pixels.end());
@@ -175,7 +175,7 @@ PIXEL bilinearInterpolate(std::vector<PIXEL> & pixels, float outX, float outY)
     return retVal;
 }
 
-PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1, float outX, float outY)
+Pixel linearInterpolate(Pixel pixel0, Pixel pixel1, float outX, float outY)
 {
     if (pixel1.y == pixel0.y)
     {
@@ -201,7 +201,7 @@ PIXEL linearInterpolate(PIXEL pixel0, PIXEL pixel1, float outX, float outY)
     return {0, 0, 0};
 }
 
-void clipHistogram(IMAGE_HISTOGRAM & histogram, double clipLimit)
+void clipHistogram(ImageHistogram & histogram, double clipLimit)
 {
     unsigned int numberOfPixelsOverLimit(0);
 
