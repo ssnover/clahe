@@ -24,21 +24,24 @@ static bool isCornerRegion(unsigned int x,
                            unsigned int y,
                            unsigned int tilesHorizontal,
                            unsigned int tilesVertical,
-                           cv::Mat const & input,
+                           unsigned int inputColumns,
+                           unsigned int inputRows,
                            std::array<TileCoordinates, 4> & outputTile);
 
 static bool isBorderRegion(unsigned int x,
                            unsigned int y,
                            unsigned int tilesHorizontal,
                            unsigned int tilesVertical,
-                           cv::Mat const & input,
+                           unsigned int inputColumns,
+                           unsigned int inputRows,
                            std::array<TileCoordinates, 4> & outputTile);
 
 static void getFourClosestTiles(unsigned int x,
                                 unsigned int y,
                                 unsigned int tilesHorizontal,
                                 unsigned int tilesVertical,
-                                cv::Mat const & input,
+                                unsigned int inputColumns,
+                                unsigned int inputRows,
                                 std::array<TileCoordinates, 4> & outputTile);
 
 static unsigned int getPixelCoordinateFromTileCoordinate(unsigned int tileCoordinate,
@@ -91,16 +94,10 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
                 regionHeight += input.rows % tilesVertical;
             }
 
-            auto tileBounds = cv::Rect(tileWidth * colIdx, tileHeight * rowIdx,
-                                       regionWidth, regionHeight);
-
-            // Get the region of interest from the image
-            cv::Mat regionOfInterest;
-            getSubregionOfImage(input, tileBounds, regionOfInterest);
-
             // Get the histogram for the tile
-            ImageHistogram tileHistogram;
-            generateGrayscaleHistogram(regionOfInterest, tileHistogram);
+            auto tileBounds = Rectangle(tileWidth * colIdx, tileHeight * rowIdx,
+                                       regionWidth, regionHeight);
+            auto tileHistogram(generateGrayscaleHistogramForSubregion(input, tileBounds));
 
             // Clip the histogram and redistribute
             clipHistogram(tileHistogram, clipLimit);
@@ -117,7 +114,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
         {
             // Find the four closest tile centers and the tile coordinates
             std::array<TileCoordinates, 4> closestTiles{};
-            if (isCornerRegion(colIdx, rowIdx, tilesHorizontal, tilesVertical, input, closestTiles))
+            if (isCornerRegion(colIdx, rowIdx, tilesHorizontal, tilesVertical, input.cols, input.rows, closestTiles))
             {
                 // The closest tile is in index 0
                 uint8_t currentPixelIntensity = input.at<uint8_t>(rowIdx, colIdx);
@@ -126,7 +123,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
                 output.at<uint8_t>(rowIdx, colIdx) = newPixelIntensity;
             }
             else if (isBorderRegion(colIdx, rowIdx, tilesHorizontal,
-                                    tilesVertical, input, closestTiles))
+                                    tilesVertical, input.cols, input.rows, closestTiles))
             {
                 // The two closest tiles are indices 0 and 1
                 Pixel pixel0 = {
@@ -150,7 +147,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             {
                 // Grab the tile coordinates from all 4 indices
                 getFourClosestTiles(colIdx, rowIdx, tilesHorizontal,
-                                    tilesVertical, input, closestTiles);
+                                    tilesVertical, input.cols, input.rows, closestTiles);
                 // Create a pixel for each tile center with an intensity from
                 // mapping the current input pixel
                 std::vector<Pixel> tileCenters;
@@ -200,11 +197,12 @@ static bool isCornerRegion(unsigned int x,
                            unsigned int y,
                            unsigned int tilesHorizontal,
                            unsigned int tilesVertical,
-                           cv::Mat const & input,
+                           unsigned int inputColumns,
+                           unsigned int inputRows,
                            std::array<TileCoordinates, 4> & outputTile)
 {
-    unsigned int const tileWidth(input.cols / tilesHorizontal);
-    unsigned int const tileHeight(input.rows / tilesVertical);
+    unsigned int const tileWidth(inputColumns / tilesHorizontal);
+    unsigned int const tileHeight(inputRows / tilesVertical);
     // Is it in the top left corner?
     if (x <= (tileWidth / 2) && y <= (tileHeight / 2))
     {
@@ -239,11 +237,12 @@ static bool isBorderRegion(unsigned int x,
                            unsigned int y,
                            unsigned int tilesHorizontal,
                            unsigned int tilesVertical,
-                           cv::Mat const & input,
+                           unsigned int inputColumns,
+                           unsigned int inputRows,
                            std::array<TileCoordinates, 4> & outputTile)
 {
-    unsigned int const tileWidth(input.cols / tilesHorizontal);
-    unsigned int const tileHeight(input.rows / tilesVertical);
+    unsigned int const tileWidth(inputColumns / tilesHorizontal);
+    unsigned int const tileHeight(inputRows / tilesVertical);
 
     // Is it on the top border?
     if (y <= (tileHeight / 2))
@@ -297,11 +296,12 @@ static void getFourClosestTiles(unsigned int x,
                                 unsigned int y,
                                 unsigned int tilesHorizontal,
                                 unsigned int tilesVertical,
-                                cv::Mat const & input,
+                                unsigned int inputColumns,
+                                unsigned int inputRows,
                                 std::array<TileCoordinates, 4> & outputTile)
 {
-    unsigned int const tileWidth(input.cols / tilesHorizontal);
-    unsigned int const tileHeight(input.rows / tilesVertical);
+    unsigned int const tileWidth(inputColumns / tilesHorizontal);
+    unsigned int const tileHeight(inputRows / tilesVertical);
 
     unsigned int leftX = getLowerTileCoordinate(x, tileWidth);
     unsigned int rightX = leftX + 1;

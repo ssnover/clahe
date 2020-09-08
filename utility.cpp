@@ -2,6 +2,7 @@
  * file: utility.cpp
  */
 
+#include <cassert>
 #include "utility.hpp"
 #include <opencv2/opencv.hpp>
 
@@ -23,6 +24,23 @@ int generateGrayscaleHistogram(cv::Mat const & image, ImageHistogram & outputHis
     }
 
     return 0;
+}
+
+ImageHistogram generateGrayscaleHistogramForSubregion(cv::Mat const & image, Rectangle const & region)
+{
+    assert(region.height + region.y <= image.rows);
+    assert(region.width + region.x <= image.cols);
+    ImageHistogram output{};
+
+    for (auto rowIdx = region.y; rowIdx < (region.height + region.y); ++rowIdx)
+    {
+        for (auto colIdx = region.x; colIdx < (region.width + region.x); ++colIdx)
+        {
+            output.histogram[image.at<uint8_t>(rowIdx, colIdx)]++;
+        }
+    }
+
+    return output;
 }
 
 int createHistogramPlot(ImageHistogram const & histogram,
@@ -96,17 +114,6 @@ float calculateEntropy(cv::Mat const & image)
     }
 
     return isnan(entropy) ? 0.f : entropy;
-}
-
-int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat & output)
-{
-    if (region.x + region.width > input.cols || region.y + region.height > input.rows)
-    {
-        return -1;
-    }
-
-    input(region).copyTo(output);
-    return 0;
 }
 
 GrayLevel classifyGrayLevel(ImageHistogram const & histogram)

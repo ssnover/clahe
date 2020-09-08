@@ -23,6 +23,18 @@ enum GrayLevel : uint8_t
     HIGH = 2,
 };
 
+struct Rectangle
+{
+    unsigned int x;
+    unsigned int y;
+    unsigned int width;
+    unsigned int height;
+
+    Rectangle(unsigned int _x, unsigned int _y, unsigned int _width, unsigned int _height)
+      : x(_x), y(_y), width(_width), height(_height)
+    {}
+};
+
 struct ImageHistogram
 {
     std::vector<unsigned int> histogram;
@@ -80,6 +92,14 @@ struct Pixel
 int generateGrayscaleHistogram(cv::Mat const & image, ImageHistogram & outputHistogram);
 
 /*
+ * Generates the pixel intensity histogram for a subregion of a grayscale image.
+ * 
+ * image: An OpenCV matrix containing a grayscale image.
+ * region: The subimage over which to create the histogram from.
+ */
+ImageHistogram generateGrayscaleHistogramForSubregion(cv::Mat const & image, Rectangle const & region);
+
+/*
  * Takes in a histogram and parameters for the size of the output plot image
  * and creates the plot image.
  */
@@ -101,11 +121,6 @@ int createCDFPlot(ImageHistogram const & histogram,
  * Calculates the entropy measurement of a grayscale image.
  */
 float calculateEntropy(cv::Mat const & image);
-
-/*
- * Gets a rectangular subregion of the image.
- */
-int getSubregionOfImage(cv::Mat const & input, cv::Rect const & region, cv::Mat & output);
 
 /*
  * Classifies the image into one of three categories based on where the highest
