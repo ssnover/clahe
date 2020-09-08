@@ -18,12 +18,6 @@ namespace cv
 class Mat;
 }
 
-/*
- * clahe.hpp Declarations
- */
-namespace snover
-{
-
 using LookupTable = std::array<uint8_t, 256>;
 
 using GrayLevelMappingFunction = std::function<void(ImageHistogram const & histogram, LookupTable * outputTable)>;
@@ -46,5 +40,3 @@ using GrayLevelMappingFunction = std::function<void(ImageHistogram const & histo
                         cv::Mat & output,
                         GrayLevelMappingFunction mapping,
                         double clipLimit = 40.0) noexcept;
-
-} // namespace snover

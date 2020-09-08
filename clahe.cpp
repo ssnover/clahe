@@ -8,9 +8,6 @@
 #include "opencv2/opencv.hpp"
 #include "clahe.hpp"
 
-namespace snover
-{
-
 struct TileCoordinates
 {
     unsigned int x;
@@ -328,5 +325,3 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
 {
     return static_cast<unsigned int>((pixelDimension - (tileDimension / 2)) / tileDimension);
 }
-
-} // namespace snover

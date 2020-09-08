@@ -12,7 +12,7 @@
 #include "clahe.hpp"
 #include "utility.hpp"
 
-static void unityMapping(snover::ImageHistogram const & histogram, snover::LookupTable * outputTable)
+static void unityMapping(ImageHistogram const & histogram, LookupTable * outputTable)
 {
     for (auto i = 0u; i < outputTable->size(); ++i)
     {
@@ -36,13 +36,13 @@ int main(int argc, char ** argv)
     auto start = std::chrono::high_resolution_clock::now();
     if (argc == 3)
     {
-        retVal = snover::clahe(image, processedImage, atoi(argv[2]));
+        retVal = clahe(image, processedImage, atoi(argv[2]));
     }
     else
     {
         // In order to specify your own mapping function:
-        // retVal = snover::clahe(image, processedImage, unityMapping);
-        retVal = snover::clahe(image, processedImage);
+        // retVal = clahe(image, processedImage, unityMapping);
+        retVal = clahe(image, processedImage);
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -53,20 +53,20 @@ int main(int argc, char ** argv)
     cv::imshow(windowNameNewImage, processedImage);
 
     // Get the histogram of the original image
-    snover::ImageHistogram originalHistogram;
-    snover::generateGrayscaleHistogram(image, originalHistogram);
+    ImageHistogram originalHistogram;
+    generateGrayscaleHistogram(image, originalHistogram);
     cv::Mat originalHistogramImage;
-    snover::createHistogramPlot(originalHistogram, 512, 512, originalHistogramImage);
+    createHistogramPlot(originalHistogram, 512, 512, originalHistogramImage);
     // Display it
     std::string const windowOriginalHistogram("Original Histogram");
     cv::namedWindow(windowOriginalHistogram, cv::WINDOW_NORMAL);
     cv::imshow(windowOriginalHistogram, originalHistogramImage);
 
     // Get the histogram of the new image
-    snover::ImageHistogram claheHistogram;
-    snover::generateGrayscaleHistogram(processedImage, claheHistogram);
+    ImageHistogram claheHistogram;
+    generateGrayscaleHistogram(processedImage, claheHistogram);
     cv::Mat claheHistImage;
-    snover::createHistogramPlot(claheHistogram, 512, 512, claheHistImage);
+    createHistogramPlot(claheHistogram, 512, 512, claheHistImage);
     // Display it
     std::string const windowNewHistogram("New Histogram");
     cv::namedWindow(windowNewHistogram, cv::WINDOW_NORMAL);
@@ -78,7 +78,7 @@ int main(int argc, char ** argv)
 
     cv::imwrite("output-clahe.jpg", processedImage);
 
-    std::cout << "snover::clahe returned with " << retVal << std::endl;
+    std::cout << "clahe returned with " << retVal << std::endl;
 
     return 0;
 }

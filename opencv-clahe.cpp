@@ -6,9 +6,16 @@
 
 #include "opencv2/imgproc.hpp"
 #include "opencv2/opencv.hpp"
+#include "plotting.hpp"
 #include "utility.hpp"
 #include <iostream>
 #include <chrono>
+
+/*
+ * Calculates the entropy measurement of a grayscale image.
+ */
+float calculateEntropy(cv::Mat const & image);
+
 
 int main(int argc, char ** argv)
 {
@@ -32,11 +39,11 @@ int main(int argc, char ** argv)
     }
 
     // find the histogram of the original image
-    snover::ImageHistogram grayHistogram;
-    snover::generateGrayscaleHistogram(image, grayHistogram);
+    ImageHistogram grayHistogram;
+    generateGrayscaleHistogram(image, grayHistogram);
 
     cv::Mat histogramImage;
-    snover::createHistogramPlot(grayHistogram, 512, 512, histogramImage);
+    createHistogramPlot(grayHistogram, 512, 512, histogramImage);
 
     // do normal OpenCV histogram equalization
     cv::Mat normalEqualization;
@@ -52,15 +59,15 @@ int main(int argc, char ** argv)
     std::cout << "Duration (us): " << duration.count() << std::endl;
 
     // find the histogram of the CLAHE image
-    snover::ImageHistogram claheHistogram;
-    snover::generateGrayscaleHistogram(claheImage, claheHistogram);
+    ImageHistogram claheHistogram;
+    generateGrayscaleHistogram(claheImage, claheHistogram);
     cv::Mat claheHistImage;
-    snover::createHistogramPlot(claheHistogram, 512, 512, claheHistImage);
+    createHistogramPlot(claheHistogram, 512, 512, claheHistImage);
 
     std::cout << "Entropies:" << std::endl;
-    std::cout << "Original: " << snover::calculateEntropy(image) << std::endl;
-    std::cout << "OpenCV CLAHE: " << snover::calculateEntropy(claheImage) << std::endl;
-    std::cout << "OpenCV Normal histeq: " << snover::calculateEntropy(normalEqualization) << std::endl;
+    std::cout << "Original: " << calculateEntropy(image) << std::endl;
+    std::cout << "OpenCV CLAHE: " << calculateEntropy(claheImage) << std::endl;
+    std::cout << "OpenCV Normal histeq: " << calculateEntropy(normalEqualization) << std::endl;
 
     std::string const windowNameOriginalImage("Original Image");
     std::string const windowNameNewImage("Histogram Equalized Image");
@@ -82,4 +89,21 @@ int main(int argc, char ** argv)
     cv::destroyAllWindows();
 
     return 0;
+}
+
+float calculateEntropy(cv::Mat const & image)
+{
+    ImageHistogram temp;
+    generateGrayscaleHistogram(image, temp);
+
+    auto totalPixels(image.rows * image.cols);
+    float entropy = 0.0;
+
+    for (auto i = 0u; i < 256; ++i)
+    {
+        float proportion = static_cast<float>(temp[i]) / totalPixels;
+        entropy += -1 * proportion * log2(proportion);
+    }
+
+    return isnan(entropy) ? 0.f : entropy;
 }

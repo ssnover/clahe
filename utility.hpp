@@ -14,8 +14,6 @@ namespace cv
 class Mat;
 } // namespace cv
 
-namespace snover
-{
 enum GrayLevel : uint8_t
 {
     LOW = 0,
@@ -100,29 +98,6 @@ int generateGrayscaleHistogram(cv::Mat const & image, ImageHistogram & outputHis
 ImageHistogram generateGrayscaleHistogramForSubregion(cv::Mat const & image, Rectangle const & region);
 
 /*
- * Takes in a histogram and parameters for the size of the output plot image
- * and creates the plot image.
- */
-int createHistogramPlot(ImageHistogram const & histogram,
-                        unsigned int width,
-                        unsigned int height,
-                        cv::Mat & outputImage);
-
-/*
- * Takes in a histogram and parameters for the size of the output plot image
- * and creates a plot image of a CDF for the histogram.
- */
-int createCDFPlot(ImageHistogram const & histogram,
-                  unsigned int width,
-                  unsigned int height,
-                  cv::Mat & outputImage);
-
-/*
- * Calculates the entropy measurement of a grayscale image.
- */
-float calculateEntropy(cv::Mat const & image);
-
-/*
  * Classifies the image into one of three categories based on where the highest
  * number of gray scale intensities falls.
  *
@@ -149,5 +124,3 @@ Pixel linearInterpolate(Pixel pixel0, Pixel pixel1, float outX, float outY);
  * all bins in the histogram.
  */
 void clipHistogram(ImageHistogram & histogram, double clipLimit);
-
-} // namespace snover
