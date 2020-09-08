@@ -4,6 +4,7 @@
  */
 
 #include <array>
+#include <memory>
 #include "opencv2/opencv.hpp"
 #include "clahe.hpp"
 
@@ -60,13 +61,13 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
     // Make the underlying data of the output the same as the input
     output.create(input.size(), input.type());
 
-    LookupTable * claheLookupTables[tilesVertical][tilesHorizontal];
+    std::unique_ptr<LookupTable> claheLookupTables[tilesVertical][tilesHorizontal];
 
     for (auto & column : claheLookupTables)
     {
         for (auto & table : column)
         {
-            table = new LookupTable;
+            table = std::make_unique<LookupTable>();
             assert(nullptr != table);
         }
     }
@@ -105,7 +106,7 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             clipHistogram(tileHistogram, clipLimit);
 
             // Perform gray level mapping
-            mapping(tileHistogram, claheLookupTables[rowIdx][colIdx]);
+            mapping(tileHistogram, claheLookupTables[rowIdx][colIdx].get());
         }
     }
 
@@ -120,10 +121,8 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
             {
                 // The closest tile is in index 0
                 uint8_t currentPixelIntensity = input.at<uint8_t>(rowIdx, colIdx);
-                auto currentMappingTable =
-                    claheLookupTables[closestTiles[0].y][closestTiles[0].x];
                 uint8_t newPixelIntensity =
-                    currentMappingTable->operator[](currentPixelIntensity);
+                    claheLookupTables[closestTiles[0].y][closestTiles[0].x]->operator[](currentPixelIntensity);
                 output.at<uint8_t>(rowIdx, colIdx) = newPixelIntensity;
             }
             else if (isBorderRegion(colIdx, rowIdx, tilesHorizontal,
@@ -169,15 +168,6 @@ static unsigned int getLowerTileCoordinate(float pixelDimension, float tileDimen
                 output.at<uint8_t>(rowIdx, colIdx) = static_cast<uint8_t>(
                     bilinearInterpolate(tileCenters, colIdx, rowIdx).intensity);
             }
-        }
-    }
-
-    // Clean up dynamically allocated memory
-    for (auto & column : claheLookupTables)
-    {
-        for (auto & table : column)
-        {
-            delete table;
         }
     }
 
